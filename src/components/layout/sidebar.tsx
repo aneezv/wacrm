@@ -191,7 +191,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           <Link href="/dashboard" className="flex items-center gap-2">
             <Image
               src="/logo-mark.png"
-              alt="Peregrine WACRM"
+              alt="Tanween WA-CRM"
               width={32}
               height={32}
               className="h-8 w-8"

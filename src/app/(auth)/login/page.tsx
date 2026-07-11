@@ -80,7 +80,7 @@ function LoginPageInner() {
           ) : (
             <Image
               src="/logo-mark.png"
-              alt="Peregrine WACRM"
+              alt="Tanween WA-CRM"
               width={56}
               height={56}
               className="mb-2 mx-auto h-14 w-14"

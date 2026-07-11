@@ -75,9 +75,9 @@ export const THEMES: ReadonlyArray<ThemeMeta> = [
   },
   {
     id: "emerald",
-    name: "Peregrine",
-    tagline: "Peregrine forest green — the brand default.",
-    swatch: "oklch(0.52 0.13 150)",
+    name: "Tanween",
+    tagline: "Tanween deep teal — the brand default.",
+    swatch: "oklch(0.44 0.05 210)",
   },
   {
     id: "cobalt",
