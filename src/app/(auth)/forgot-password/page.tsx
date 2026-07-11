@@ -78,15 +78,13 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Image
-              src="/logo-mark.png"
-              alt="Peregrine WACRM"
-              width={28}
-              height={28}
-              className="h-7 w-7"
-            />
-          </div>
+          <Image
+            src="/logo-mark.png"
+            alt="Peregrine WACRM"
+            width={56}
+            height={56}
+            className="mb-2 mx-auto h-14 w-14"
+          />
           <CardTitle className="text-xl text-foreground">Reset password</CardTitle>
           <CardDescription className="text-muted-foreground">
             Enter your email and we&apos;ll send you a reset link
