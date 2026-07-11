@@ -73,19 +73,19 @@ function LoginPageInner() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            {inviteToken ? (
+          {inviteToken ? (
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
               <UsersRound className="h-6 w-6 text-primary" />
-            ) : (
-              <Image
-                src="/logo-mark.png"
-                alt="Peregrine WACRM"
-                width={28}
-                height={28}
-                className="h-7 w-7"
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <Image
+              src="/logo-mark.png"
+              alt="Peregrine WACRM"
+              width={56}
+              height={56}
+              className="mb-2 h-14 w-14"
+            />
+          )}
           <CardTitle className="text-xl text-foreground">
             {inviteToken ? t('titleAccept') : t('titleWelcome')}
           </CardTitle>
