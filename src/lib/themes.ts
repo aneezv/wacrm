@@ -23,7 +23,7 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "violet";
+export const DEFAULT_THEME: ThemeId = "emerald";
 
 export const STORAGE_KEY = "wacrm.theme";
 
@@ -75,9 +75,9 @@ export const THEMES: ReadonlyArray<ThemeMeta> = [
   },
   {
     id: "emerald",
-    name: "Emerald",
-    tagline: "Growth-coded, nods at messaging without copying WhatsApp green.",
-    swatch: "oklch(0.62 0.16 162)",
+    name: "Peregrine",
+    tagline: "Peregrine forest green — the brand default.",
+    swatch: "oklch(0.52 0.13 150)",
   },
   {
     id: "cobalt",

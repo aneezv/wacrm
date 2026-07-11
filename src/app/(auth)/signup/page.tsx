@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MessageSquare, CheckCircle, UsersRound } from "lucide-react";
+import { CheckCircle, UsersRound } from "lucide-react";
 
 // `useSearchParams` opts the component out of static prerendering
 // unless wrapped in Suspense — same pattern as /login.
@@ -135,7 +136,13 @@ function SignupPageInner() {
             {inviteToken ? (
               <UsersRound className="h-6 w-6 text-primary" />
             ) : (
-              <MessageSquare className="h-6 w-6 text-primary" />
+              <Image
+                src="/logo-mark.png"
+                alt="Peregrine WACRM"
+                width={28}
+                height={28}
+                className="h-7 w-7"
+              />
             )}
           </div>
           <CardTitle className="text-xl text-foreground">
