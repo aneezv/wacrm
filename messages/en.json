@@ -262,7 +262,11 @@
       "noTags": "No tags",
       "noDeals": "No deals",
       "addDeal": "Add deal",
-      "addNotePlaceholder": "Add a note..."
+      "addNotePlaceholder": "Add a note...",
+      "editTags": "Edit tags",
+      "noTagsCreateInSettings": "No tags — create in Settings",
+      "tagAttachFailed": "Failed to add tag",
+      "tagDetachFailed": "Failed to remove tag"
     },
     "aiBanner": {
       "pausedTitle": "AI assistant is paused here",

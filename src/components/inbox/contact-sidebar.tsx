@@ -15,12 +15,21 @@ import {
   DollarSign,
   StickyNote,
   Plus,
+  MoreVertical,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { DealForm } from "@/components/pipelines/deal-form";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 interface ContactSidebarProps {
   contact: Contact | null;
@@ -35,6 +44,8 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [notes, setNotes] = useState<ContactNote[]>([]);
   const [tags, setTags] = useState<(Tag & { contact_tag_id: string })[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
   const [dealFormOpen, setDealFormOpen] = useState(false);
@@ -44,8 +55,8 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
 
     const supabase = createClient();
 
-    // Fetch deals, notes, and tags in parallel
-    const [dealsRes, notesRes, tagsRes] = await Promise.all([
+    // Fetch deals, notes, tags, and tag catalog in parallel
+    const [dealsRes, notesRes, tagsRes, allTagsRes] = await Promise.all([
       supabase
         .from("deals")
         .select("*, stage:pipeline_stages(*)")
@@ -60,6 +71,10 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
         .from("contact_tags")
         .select("id, tag_id, tags(*)")
         .eq("contact_id", contact.id),
+      supabase
+        .from("tags")
+        .select("*")
+        .order("name"),
     ]);
 
     if (dealsRes.data) setDeals(dealsRes.data);
@@ -73,6 +88,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
         }));
       setTags(mapped);
     }
+    if (allTagsRes.data) setAllTags(allTagsRes.data);
   }, [contact]);
 
   // Load on contact change. setContactData/setTags run inside async
@@ -81,6 +97,39 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchContactData();
   }, [fetchContactData]);
+
+  const toggleTag = useCallback(
+    async (tag: Tag) => {
+      if (!contact) return;
+      const supabase = createClient();
+      const attached = tags.some((t) => t.id === tag.id);
+
+      if (attached) {
+        const { error } = await supabase
+          .from("contact_tags")
+          .delete()
+          .eq("contact_id", contact.id)
+          .eq("tag_id", tag.id);
+        if (error) {
+          toast.error(tSidebar("tagDetachFailed"));
+        } else {
+          setTags((prev) => prev.filter((t) => t.id !== tag.id));
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("contact_tags")
+          .insert({ contact_id: contact.id, tag_id: tag.id })
+          .select("id")
+          .single();
+        if (error) {
+          toast.error(tSidebar("tagAttachFailed"));
+        } else if (data) {
+          setTags((prev) => [...prev, { ...tag, contact_tag_id: data.id }]);
+        }
+      }
+    },
+    [contact, tags, tSidebar]
+  );
 
   const handleCopyPhone = useCallback(async () => {
     if (!contact?.phone) return;
@@ -185,9 +234,54 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
 
           {/* Tags */}
           <div>
-            <div className="flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <TagIcon className="h-3 w-3" />
-              {tSidebar("tags")}
+            <div className="flex items-center justify-between px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <TagIcon className="h-3 w-3" />
+                {tSidebar("tags")}
+              </span>
+              <DropdownMenu open={tagMenuOpen} onOpenChange={setTagMenuOpen}>
+                <DropdownMenuTrigger
+                  className="rounded bg-primary p-0.5 text-primary-foreground transition-colors hover:bg-primary/90"
+                  aria-label={tSidebar("editTags")}
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" side="top" sideOffset={4} className="max-h-60 w-48">
+                  {allTags.length === 0 ? (
+                    <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                      {tSidebar("noTagsCreateInSettings")}
+                    </DropdownMenuItem>
+                  ) : (
+                    allTags.map((tag) => {
+                      const isAttached = tags.some((t) => t.id === tag.id);
+                      return (
+                        <DropdownMenuItem
+                          key={tag.id}
+                          closeOnClick={false}
+                          className="flex items-center justify-between gap-2 text-xs"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleTag(tag);
+                          }}
+                        >
+                          <span className="flex items-center gap-2 truncate">
+                            <span
+                              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="truncate">{tag.name}</span>
+                          </span>
+                          {isAttached ? (
+                            <X className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <Plus className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          )}
+                        </DropdownMenuItem>
+                      );
+                    })
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               {tags.length === 0 ? (
