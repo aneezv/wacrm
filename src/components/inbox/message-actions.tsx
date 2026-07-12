@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { CornerUpLeft, Copy, SmilePlus } from "lucide-react";
+import { CornerUpLeft, Copy, Download, SmilePlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -61,6 +61,29 @@ export function MessageActions({
       toast.success(t("copied"));
     } catch {
       toast.error(t("copyFailed"));
+    }
+    setTouchOpen(false);
+  };
+
+  const handleDownload = async () => {
+    const url = message.media_url;
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      // Derive filename from URL or fall back to a sensible default
+      const urlPath = url.split("/").pop()?.split("?")[0];
+      a.download = urlPath && urlPath.includes(".") ? urlPath : "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast.error(t("downloadFailed"));
     }
     setTouchOpen(false);
   };
@@ -144,6 +167,16 @@ export function MessageActions({
         >
           <Copy className="h-3.5 w-3.5" />
         </button>
+        {message.media_url && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="flex h-5 w-5 items-center justify-center rounded-full text-popover-foreground hover:bg-muted hover:text-foreground"
+            aria-label={t("download")}
+          >
+            <Download className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
       </div>
     </div>

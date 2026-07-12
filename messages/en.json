@@ -226,7 +226,9 @@
       "reactWith": "React with {emoji}",
       "nothingToCopy": "Nothing to copy",
       "copied": "Copied",
-      "copyFailed": "Copy failed"
+      "copyFailed": "Copy failed",
+      "download": "Download",
+      "downloadFailed": "Download failed"
     },
     "replyQuote": {
       "photo": "[Photo]",
