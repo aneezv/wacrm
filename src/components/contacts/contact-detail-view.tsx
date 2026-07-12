@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency } from '@/lib/currency';
@@ -38,6 +39,7 @@ import {
   X,
   DollarSign,
   LayoutTemplate,
+  MessageSquare,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -56,6 +58,7 @@ export function ContactDetailView({
 }: ContactDetailViewProps) {
   const t = useTranslations('Contacts.detailView');
   const supabase = createClient();
+  const router = useRouter();
   const { accountId, defaultCurrency } = useAuth();
 
   const [contact, setContact] = useState<Contact | null>(null);
@@ -67,6 +70,7 @@ export function ContactDetailView({
   // find-or-creates the conversation, so no inbound message is required.
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [sendingTemplate, setSendingTemplate] = useState(false);
+  const [openingConv, setOpeningConv] = useState(false);
 
   // Details tab
   const [editName, setEditName] = useState('');
@@ -372,6 +376,26 @@ export function ContactDetailView({
     }
   }
 
+  async function handleOpenConversation() {
+    if (!contactId || !accountId) return;
+    setOpeningConv(true);
+    try {
+      const { data } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('account_id', accountId)
+        .eq('contact_id', contactId)
+        .maybeSingle();
+      if (data?.id) {
+        router.push(`/inbox?c=${data.id}`);
+      } else {
+        toast.info(t('toastNoConversation'));
+      }
+    } finally {
+      setOpeningConv(false);
+    }
+  }
+
   function getInitials(name?: string | null) {
     if (!name) return '?';
     return name
@@ -438,7 +462,7 @@ export function ContactDetailView({
                   </div>
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex gap-2">
                 <Button
                   size="sm"
                   onClick={() => setTemplatePickerOpen(true)}
@@ -451,6 +475,19 @@ export function ContactDetailView({
                     <LayoutTemplate className="size-4" />
                   )}
                   {t('sendTemplateBtn')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleOpenConversation}
+                  disabled={openingConv}
+                >
+                  {openingConv ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MessageSquare className="size-4" />
+                  )}
+                  {t('openConversationBtn')}
                 </Button>
               </div>
             </SheetHeader>

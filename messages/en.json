@@ -397,6 +397,8 @@
         "noTagsAvailable": "No tags available. Create tags in Settings."
       },
       "sendTemplateBtn": "Send template",
+      "openConversationBtn": "Open conversation",
+      "toastNoConversation": "No chat yet with this contact. Send a template to start the conversation.",
       "saveChangesBtn": "Save Changes",
       "saveCustomFieldsBtn": "Save Custom Fields",
       "toastPhoneRequired": "Phone number is required",
