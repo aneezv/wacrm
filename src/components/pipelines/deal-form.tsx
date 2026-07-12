@@ -10,6 +10,7 @@ import type {
   Conversation,
   Deal,
   DealStatus,
+  Pipeline,
   PipelineStage,
   Profile,
 } from "@/types";
@@ -38,9 +39,11 @@ interface DealFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   deal?: Deal | null;
-  pipelineId: string;
-  stages: PipelineStage[];
+  pipelineId?: string;
+  stages?: PipelineStage[];
   defaultStageId?: string;
+  defaultContactId?: string;
+  selectPipeline?: boolean;
   onSaved: () => void;
 }
 
@@ -51,6 +54,8 @@ export function DealForm({
   pipelineId,
   stages,
   defaultStageId,
+  defaultContactId,
+  selectPipeline,
   onSaved,
 }: DealFormProps) {
   const t = useTranslations("Pipelines.form");
@@ -68,8 +73,17 @@ export function DealForm({
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [internalPipelineId, setInternalPipelineId] = useState("");
+  const [internalStages, setInternalStages] = useState<PipelineStage[]>([]);
+  const [stagesLoaded, setStagesLoaded] = useState(false);
   const [linkedConversation, setLinkedConversation] =
     useState<Conversation | null>(null);
+
+  const effectivePipelineId = selectPipeline
+    ? internalPipelineId
+    : pipelineId ?? "";
+  const effectiveStages = selectPipeline ? internalStages : stages ?? [];
 
   const [saving, setSaving] = useState(false);
   const [statusAction, setStatusAction] = useState<DealStatus | null>(null);
@@ -77,9 +91,7 @@ export function DealForm({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Reset the form fields every time the sheet opens or its input
-  // props change. This is a legitimate prop-driven sync; the rule is
-  // over-cautious here, hence the block-level disable.
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // props change. This is a legitimate prop-driven sync.
   useEffect(() => {
     if (!open) return;
     setConfirmDelete(false);
@@ -98,14 +110,25 @@ export function DealForm({
       setTitle("");
       setValue("");
       setCurrency(defaultCurrency);
-      setContactId("");
-      setStageId(defaultStageId || stages[0]?.id || "");
+      setContactId(defaultContactId ?? "");
+      setStageId(defaultStageId || effectiveStages[0]?.id || "");
       setAssignedTo("");
       setExpectedCloseDate("");
       setNotes("");
     }
-  }, [open, deal, defaultStageId, stages, defaultCurrency]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    // In selectPipeline mode the stages-load effect owns stageId, so
+    // internalStages is intentionally NOT a dep here — otherwise switching
+    // pipelines would reload stages and wipe the user's in-progress fields.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    open,
+    deal,
+    defaultStageId,
+    defaultContactId,
+    stages,
+    selectPipeline,
+    defaultCurrency,
+  ]);
 
   // Load supporting data once the sheet is open
   useEffect(() => {
@@ -125,12 +148,53 @@ export function DealForm({
     };
   }, [open, supabase]);
 
+  // When the form manages its own pipeline (sidebar use), load pipelines and
+  // default to the first one. Its stages are loaded by the effect below.
+  useEffect(() => {
+    if (!open || !selectPipeline) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("pipelines")
+        .select("*")
+        .order("created_at");
+      if (cancelled) return;
+      const list = (data ?? []) as Pipeline[];
+      setPipelines(list);
+      setInternalPipelineId((prev) => prev || list[0]?.id || "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, selectPipeline, supabase]);
+
+  // Load stages for the internally selected pipeline (sidebar use only).
+  useEffect(() => {
+    if (!open || !selectPipeline || !internalPipelineId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("pipeline_stages")
+        .select("*")
+        .eq("pipeline_id", internalPipelineId)
+        .order("position");
+      if (cancelled) return;
+      const list = (data ?? []) as PipelineStage[];
+      setInternalStages(list);
+      setStagesLoaded(true);
+      // Snap stage selection to the first stage of the chosen pipeline.
+      setStageId(list[0]?.id || "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, selectPipeline, internalPipelineId, supabase]);
+
   // Fetch linked conversation for the selected contact (newest open one).
   // Clearing on no-selection is sync with prop state; the populated
   // case runs setLinkedConversation inside the async fetch callback.
   useEffect(() => {
     if (!open || !contactId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLinkedConversation(null);
       return;
     }
@@ -163,7 +227,7 @@ export function DealForm({
       value: parseFloat(value) || 0,
       currency,
       contact_id: contactId,
-      pipeline_id: pipelineId,
+      pipeline_id: effectivePipelineId,
       stage_id: stageId,
       assigned_to: assignedTo || null,
       notes: notes.trim() || null,
@@ -269,6 +333,23 @@ export function DealForm({
               />
             </div>
 
+            {selectPipeline && !deal && (
+              <div className="grid gap-2">
+                <Label className="text-muted-foreground">{t("pipeline")}</Label>
+                <select
+                  value={internalPipelineId}
+                  onChange={(e) => setInternalPipelineId(e.target.value)}
+                  className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                >
+                  {pipelines.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label className="text-muted-foreground">{t("contact")}</Label>
               <select
@@ -342,12 +423,18 @@ export function DealForm({
                 onChange={(e) => setStageId(e.target.value)}
                 className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary"
               >
-                {stages.map((s) => (
+                {effectiveStages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
                 ))}
               </select>
+              {selectPipeline &&
+                !deal &&
+                stagesLoaded &&
+                effectiveStages.length === 0 && (
+                  <p className="text-xs text-amber-500">{t("noStagesHint")}</p>
+                )}
             </div>
 
             <div className="grid gap-2">

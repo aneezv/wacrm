@@ -261,6 +261,7 @@
       "deals": "Deals",
       "noTags": "No tags",
       "noDeals": "No deals",
+      "addDeal": "Add deal",
       "addNotePlaceholder": "Add a note..."
     },
     "aiBanner": {
@@ -510,6 +511,8 @@
     "form": {
       "editDeal": "Edit Deal",
       "newDeal": "New Deal",
+      "pipeline": "Pipeline",
+      "noStagesHint": "This pipeline has no stages yet. Add stages on the Pipelines page before creating a deal here.",
       "title": "Title",
       "titlePlaceholder": "Deal title",
       "contact": "Contact",

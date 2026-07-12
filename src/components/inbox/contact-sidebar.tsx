@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DealForm } from "@/components/pipelines/deal-form";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 
@@ -36,6 +37,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
   const [tags, setTags] = useState<(Tag & { contact_tag_id: string })[]>([]);
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
+  const [dealFormOpen, setDealFormOpen] = useState(false);
 
   const fetchContactData = useCallback(async () => {
     if (!contact) return;
@@ -212,9 +214,18 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
 
           {/* Active Deals */}
           <div>
-            <div className="flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <DollarSign className="h-3 w-3" />
-              {tSidebar("deals")}
+            <div className="flex items-center justify-between px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <DollarSign className="h-3 w-3" />
+                {tSidebar("deals")}
+              </span>
+              <button
+                onClick={() => setDealFormOpen(true)}
+                className="rounded bg-primary p-0.5 text-primary-foreground transition-colors hover:bg-primary/90"
+                aria-label={tSidebar("addDeal")}
+              >
+                <Plus className="h-3 w-3" />
+              </button>
             </div>
             <div className="mt-2 space-y-2">
               {deals.length === 0 ? (
@@ -249,6 +260,14 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                 ))
               )}
             </div>
+            <DealForm
+              open={dealFormOpen}
+              onOpenChange={setDealFormOpen}
+              deal={null}
+              selectPipeline
+              defaultContactId={contact.id}
+              onSaved={fetchContactData}
+            />
           </div>
 
           {/* Divider */}
